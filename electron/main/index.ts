@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path'
 
@@ -110,9 +110,29 @@ ipcMain.handle('open-win', (_, arg) => {
     },
   })
 
+  console.log('open-win handled')
+
   if (process.env.VITE_DEV_SERVER_URL) {
     childWindow.loadURL(`${url}#${arg}`)
   } else {
     childWindow.loadFile(indexHtml, { hash: arg })
+  }
+})
+
+ipcMain.handle('dialog:openFile', async (_, arg) => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({ properties:['openFile'] })
+  if (canceled) {
+    return
+  } else {
+    return filePaths[0]
+  }
+})
+
+ipcMain.handle('dialog:openDirectory', async (_, arg) => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({ properties:['openDirectory'] })
+  if (canceled) {
+    return
+  } else {
+    return filePaths[0]
   }
 })

@@ -1,7 +1,7 @@
 <template>
-  <el-container>
+  <el-container class="container">
     <el-main>
-      <el-card shadow="always">
+      <el-card shadow="always" class="card">
         <template #header>
           <div class="card-header">
             <el-row :gutter="20">
@@ -15,13 +15,15 @@
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
                     active-text="服务器"
                     inactive-text="客户端"
+                    active-value="server"
+                    inactive-value="client"
                     size="large"
                 />
               </el-col>
               <el-col :span="14" class="head-opt">
-                <el-checkbox v-model="gen_cs" label="CS" size="large"/>
-                <el-checkbox v-model="gen_csv" label="CSV" size="large"/>
-                <el-checkbox v-model="gen_json" label="JSON" size="large"/>
+                <el-checkbox v-model="gen_cs" label="CS" size="large" @change="OnGenToChange('cs')"/>
+                <el-checkbox v-model="gen_csv" label="CSV" size="large" @change="OnGenToChange('csv')"/>
+                <el-checkbox v-model="gen_json" label="JSON" size="large" @change="OnGenToChange('json')"/>
               </el-col>
               <el-col :span="4" id="head-btn">
                 <el-button-group type="primary">
@@ -32,13 +34,24 @@
             </el-row>
           </div>
         </template>
-        <el-scrollbar height="430px">
-          <p v-for="item in 20" :key="item" class="scrollbar-demo-item">{{ item }}</p>
+        <el-input v-model="filter_text" placeholder="Filter keyword" />
+        <el-scrollbar max-height="440px">
+          <div>
+            <el-tree
+                ref="excel_tree_ref"
+                :data="excel_tree"
+                :props="defaultTreeProps"
+                show-checkbox
+                node-key="label"
+                :default-expanded-keys="['All']"
+                :filter-node-method="filterTreeNode"
+            />
+          </div>
         </el-scrollbar>
       </el-card>
     </el-main>
     <el-footer id="footer">
-      <el-button type="primary" size="large">开始转换</el-button>
+      <el-button type="primary" size="large" @click="OnTransformStart">开始转换</el-button>
     </el-footer>
 
     <el-dialog v-model="setting_visible" title="设置">
@@ -77,14 +90,18 @@
 </template>
 
 <script setup lang="ts">
-import {reactive, ref} from "vue";
+import {reactive, ref, watch} from "vue";
 import {Setting, Refresh, Folder} from "@element-plus/icons-vue";
-import { useStorage } from '@vueuse/core';
+import { tryOnMounted, useStorage } from '@vueuse/core';
 import { useIpcRendererInvoke } from "@vueuse/electron";
+import * as path from "path";
+import {ElTree, ElMessage} from "element-plus";
+const fs = require('fs');
+const xlsx = require('xlsx')
 
-const platform = ref(true)
+const platform = ref('s cerver')
 
-const gen_cs = ref(true)
+const gen_cs = ref(false)
 const gen_csv = ref(false)
 const gen_json = ref(false)
 
@@ -102,9 +119,78 @@ const setting_content = useStorage('tool-setting', {
   client_path: '',
 })
 
+const filter_text = ref('')
+const excel_tree_ref = ref<InstanceType<typeof ElTree>>()
+
+watch(filter_text, (val) => {
+  excel_tree_ref.value!.filter(val)
+})
+const filterTreeNode = (value: string, data: ExcelTree) => {
+  if (!value) return true
+  return data.label.toLowerCase().includes(value.toLowerCase())
+}
+
+interface ExcelTree {
+  label: string
+  children?: ExcelTree[]
+  excel_name?: string
+}
+
+const defaultTreeProps = {
+  children: 'children',
+  label: 'label',
+}
+
+const excel_root = ref<ExcelTree>({ label: 'All', children: [] })
+const excel_tree = ref<ExcelTree[]>([])
+
+tryOnMounted(() => {
+  setting_form.excel_path = setting_content.value.excel_path
+  setting_form.server_path = setting_content.value.server_path
+  setting_form.client_path = setting_content.value.client_path
+})
+
+function OnGenToChange(type:string)
+{
+  if (type == 'json' && gen_json.value) {
+    gen_csv.value = true
+  }
+
+  if (type == 'csv' && gen_csv.value === false) {
+    gen_json.value = false
+  }
+}
+
 function OnRefreshClick()
 {
-  console.log("refresh clicked")
+  excel_tree.value = []
+  excel_root.value.children = []
+
+  fs.readdir(setting_form.excel_path, (err: NodeJS.ErrnoException | null, files: string[]) => {
+    if (err) {
+      return console.error(err)
+    }
+
+    files.forEach( function (file) {
+
+      if (path.extname(file) !== '.xlsx')
+        return
+
+      const one_excel : ExcelTree = { label: path.basename(file, '.xlsx'), children: [] }
+
+      const filePath = path.join(setting_form.excel_path, file)
+      const workbook = xlsx.readFile(filePath)
+
+      workbook.SheetNames.forEach(function (sheet:string) {
+        const one_sheet : ExcelTree = { label: sheet, excel_name: file }
+        one_excel.children!.push(one_sheet)
+      })
+
+      excel_root.value.children!.push(one_excel)
+    })
+  });
+
+  excel_tree.value.push(excel_root.value)
 }
 
 function OnSettingClick()
@@ -144,9 +230,65 @@ async function OpenDirectorySelecter( type:string )
   }
 }
 
+function OnTransformStart() {
+
+  if (!gen_cs.value && !gen_csv.value && !gen_json.value) {
+    ElMessage({
+      message: '需要至少选择一个生成目的',
+      type: 'error',
+      center: true,
+      grouping: true,
+    })
+    return
+  }
+
+  const transform_list = new Map<string, string[]>()
+
+  const selected = excel_tree_ref.value!.getCheckedNodes(false, false)
+  selected.forEach(function (node) {
+    if (node.excel_name) {
+      if (transform_list.has(node.excel_name)) {
+        const sheets = transform_list.get(node.excel_name)
+        sheets!.push(node.label)
+      }
+      else {
+        transform_list.set(node.excel_name, [node.label])
+      }
+    }
+  })
+
+  if (transform_list.size <= 0) {
+    ElMessage({
+      message: '需要至少选择一个表',
+      type: 'error',
+      center: true,
+      grouping: true,
+    })
+    return
+  }
+
+  const obj = Object.fromEntries(transform_list)
+
+  const finalConfig = {}
+  finalConfig.platform = platform.value
+  finalConfig.generator = {
+    cs: gen_cs.value,
+    csv: gen_csv.value,
+    json: gen_json.value,
+  }
+  finalConfig.sheets = obj
+
+  fs.writeFile('config.txt', JSON.stringify(finalConfig, null, 2), {flag: 'w+'}, function () {
+    console.log('write done!')
+  })
+}
+
 </script>
 
 <style scoped>
+.container {
+  height: 100%;
+}
 
 #footer {
   text-align: center;
@@ -164,6 +306,11 @@ async function OpenDirectorySelecter( type:string )
 #head-tag {
   margin-top: 5px;
   text-align: left;
+}
+
+.card {
+  height: 100%;
+  border: 0;
 }
 
 .card-header {

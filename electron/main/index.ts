@@ -46,6 +46,7 @@ async function createWindow() {
     icon: join(process.env.PUBLIC, 'favicon.ico'),
     width: 1280,
     height: 720,
+    resizable: false,
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
@@ -75,6 +76,23 @@ async function createWindow() {
     return { action: 'deny' }
   })
 }
+
+const { Menu, MenuItem } = require('electron')
+const menu = new Menu()
+menu.append(new MenuItem({
+  label: 'Electron',
+  submenu: [{
+    role: 'help',
+    accelerator: process.platform === 'darwin' ? 'Alt+Cmd+H' : 'Alt+Shift+H',
+    click: () => { console.log('Electron rocks!') }
+  }, {
+    role: 'toggleDevTools',
+    accelerator: 'F12',
+    click: () => { win.webContents.openDevTools() }
+  }]
+}))
+
+Menu.setApplicationMenu(menu)
 
 app.whenReady().then(createWindow)
 

@@ -77,23 +77,25 @@ async function createWindow() {
   })
 }
 
+// Menu
 const { Menu, MenuItem } = require('electron')
 const menu = new Menu()
 menu.append(new MenuItem({
-  label: 'Electron',
+  label: 'Options',
   submenu: [{
-    role: 'help',
-    accelerator: process.platform === 'darwin' ? 'Alt+Cmd+H' : 'Alt+Shift+H',
-    click: () => { console.log('Electron rocks!') }
-  }, {
     role: 'toggleDevTools',
     accelerator: 'F12',
     click: () => { win.webContents.openDevTools() }
+  },{
+    role: 'close',
+    accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Alt+Q',
+    click: () => { app.quit() }
   }]
 }))
 
 Menu.setApplicationMenu(menu)
 
+// app
 app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
@@ -154,3 +156,21 @@ ipcMain.handle('dialog:openDirectory', async (_, arg) => {
     return filePaths[0]
   }
 })
+
+// child process
+const exec = require("child_process").exec
+ipcMain.handle('shell:exec', (_, arg) => {
+  exec(arg, function(error, stdout, stderr){
+    if(error) {
+      console.error('error: ' + error);
+      return;
+    }
+    console.log('stdout: ' + stdout);
+    console.log('stderr: ' + typeof stderr);
+
+    win?.webContents.send('shell:stdout', {error: error, stdout: stdout, stderr: stderr})
+  });
+})
+
+
+

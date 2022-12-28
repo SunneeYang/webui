@@ -86,6 +86,14 @@
       </template>
     </el-dialog>
 
+    <el-drawer v-model="shell_visible"
+               :direction="'btt'"
+               size="80%"
+               :with-header="false"
+    >
+      <p v-for="info in shell_result">{{info}}</p>
+    </el-drawer>
+
   </el-container>
 </template>
 
@@ -93,18 +101,20 @@
 import {reactive, ref, watch} from "vue";
 import {Setting, Refresh, Folder} from "@element-plus/icons-vue";
 import { tryOnMounted, useStorage } from '@vueuse/core';
-import { useIpcRendererInvoke } from "@vueuse/electron";
+import {useIpcRendererInvoke, useIpcRendererOn} from "@vueuse/electron";
 import * as path from "path";
 import {ElTree, ElMessage} from "element-plus";
 const fs = require('fs');
 const xlsx = require('xlsx')
 
+// options
 const platform = ref('s cerver')
 
 const gen_cs = ref(false)
 const gen_csv = ref(false)
 const gen_json = ref(false)
 
+// setting
 const setting_visible = ref(false)
 
 const formLabelWidth = '90px'
@@ -119,6 +129,7 @@ const setting_content = useStorage('tool-setting', {
   client_path: '',
 })
 
+// excel tree
 const filter_text = ref('')
 const excel_tree_ref = ref<InstanceType<typeof ElTree>>()
 
@@ -143,6 +154,11 @@ const defaultTreeProps = {
 
 const excel_root = ref<ExcelTree>({ label: 'All', children: [] })
 const excel_tree = ref<ExcelTree[]>([])
+
+// shell log
+const shell_visible = ref(false)
+const shell_result = ref([])
+
 
 tryOnMounted(() => {
   setting_form.excel_path = setting_content.value.excel_path
@@ -280,8 +296,21 @@ function OnTransformStart() {
 
   fs.writeFile('config.txt', JSON.stringify(finalConfig, null, 2), {flag: 'w+'}, function () {
     console.log('write done!')
+
+    useIpcRendererInvoke('shell:exec', 'dotnet C:\\Work\\brick\\Tools\\ExcelExporter\\bin\\Release\\net7.0\\publish\\ExcelExporter.dll')
   })
 }
+
+useIpcRendererOn('shell:stdout', (event, ...args) => {
+
+  if (args[0].error) {
+    console.log(args[0].error)
+    return
+  }
+
+  shell_visible.value = true
+  shell_result.value = args[0].stdout.split('\r\n')
+})
 
 </script>
 

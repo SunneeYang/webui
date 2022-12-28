@@ -81,12 +81,14 @@ async function createWindow() {
 const { Menu, MenuItem } = require('electron')
 const menu = new Menu()
 menu.append(new MenuItem({
-  label: 'Options',
+  label: '选项',
   submenu: [{
+    label: '开发者工具',
     role: 'toggleDevTools',
     accelerator: 'F12',
     click: () => { win.webContents.openDevTools() }
   },{
+    label: '关闭',
     role: 'close',
     accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Alt+Q',
     click: () => { app.quit() }

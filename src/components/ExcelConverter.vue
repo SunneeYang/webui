@@ -12,7 +12,7 @@
                 <el-switch
                     v-model="platform"
                     inline-prompt
-                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #66b1ff"
                     active-text="服务器"
                     inactive-text="客户端"
                     active-value="server"
@@ -27,14 +27,25 @@
               </el-col>
               <el-col :span="4" id="head-btn">
                 <el-button-group type="primary">
-                  <el-button :icon="Refresh" @click="OnRefreshClick" />
-                  <el-button :icon="Setting" @click="OnSettingClick"/>
+                  <el-tooltip
+                      effect="light"
+                      content="刷新"
+                  >
+                    <el-button :icon="Refresh" @click="OnRefreshClick" />
+                  </el-tooltip>
+
+                  <el-tooltip
+                      effect="light"
+                      content="设置"
+                  >
+                    <el-button :icon="Setting" @click="OnSettingClick"/>
+                  </el-tooltip>
                 </el-button-group>
               </el-col>
             </el-row>
           </div>
         </template>
-        <el-input v-model="filter_text" placeholder="Filter keyword" />
+        <el-input v-model="filter_text" />
         <el-scrollbar max-height="440px">
           <div>
             <el-tree
@@ -254,6 +265,7 @@ function OnTransformStart() {
       type: 'error',
       center: true,
       grouping: true,
+      duration: 1000
     })
     return
   }
@@ -279,6 +291,7 @@ function OnTransformStart() {
       type: 'error',
       center: true,
       grouping: true,
+      duration: 1000
     })
     return
   }

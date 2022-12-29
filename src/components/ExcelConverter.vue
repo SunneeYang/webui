@@ -302,10 +302,15 @@ function OnTransformStart() {
   const obj = Object.fromEntries(transform_list)
 
   const finalConfig = {
+    path: { excel: '', server: '', client: ''},
     platform: '',
     generator: {},
     sheets: {},
   }
+  finalConfig.path.excel = setting_content.value.excel_path
+  finalConfig.path.server = setting_content.value.server_path
+  finalConfig.path.client = setting_content.value.client_path
+
   finalConfig.platform = platform.value
   finalConfig.generator = {
     cs: gen_cs.value,

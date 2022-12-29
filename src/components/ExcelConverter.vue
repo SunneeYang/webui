@@ -109,12 +109,13 @@
 </template>
 
 <script setup lang="ts">
-import {reactive, ref, watch} from "vue";
+import {computed, reactive, ref, watch} from "vue";
 import {Setting, Refresh, Folder} from "@element-plus/icons-vue";
 import { tryOnMounted, useStorage } from '@vueuse/core';
 import {useIpcRendererInvoke, useIpcRendererOn} from "@vueuse/electron";
 import * as path from "path";
 import {ElTree, ElMessage} from "element-plus";
+import {TreeNodeData} from "element-plus/es/components/tree/src/tree.type";
 const fs = require('fs');
 const xlsx = require('xlsx')
 
@@ -147,7 +148,7 @@ const excel_tree_ref = ref<InstanceType<typeof ElTree>>()
 watch(filter_text, (val) => {
   excel_tree_ref.value!.filter(val)
 })
-const filterTreeNode = (value: string, data: ExcelTree) => {
+const filterTreeNode = (value: string, data: TreeNodeData) => {
   if (!value) return true
   return data.label.toLowerCase().includes(value.toLowerCase())
 }
@@ -240,22 +241,24 @@ function OnSettingConfirm()
 
 async function OpenDirectorySelecter( type:string )
 {
-  const result = useIpcRendererInvoke<string>('dialog:openDirectory')
+  useIpcRendererInvoke<string>('dialog:openDirectory', type)
+}
 
-  switch (type) {
+useIpcRendererOn('dialog:path', (event, ...args) => {
+  switch (args[0]) {
     case 'excel':
-      setting_form.excel_path = result
+      setting_form.excel_path = args[1][0]
       break
 
     case 'server':
-      setting_form.server_path = result
+      setting_form.server_path = args[1][0]
       break
 
     case 'client':
-      setting_form.client_path = result
+      setting_form.client_path = args[1][0]
       break
   }
-}
+})
 
 function OnTransformStart() {
 
@@ -298,7 +301,11 @@ function OnTransformStart() {
 
   const obj = Object.fromEntries(transform_list)
 
-  const finalConfig = {}
+  const finalConfig = {
+    platform: '',
+    generator: {},
+    sheets: {},
+  }
   finalConfig.platform = platform.value
   finalConfig.generator = {
     cs: gen_cs.value,

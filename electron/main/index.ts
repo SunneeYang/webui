@@ -146,7 +146,8 @@ ipcMain.handle('dialog:openFile', async (_, arg) => {
   if (canceled) {
     return
   } else {
-    return filePaths[0]
+    win?.webContents.send('dialog:path', filePaths)
+    return filePaths
   }
 })
 
@@ -155,7 +156,8 @@ ipcMain.handle('dialog:openDirectory', async (_, arg) => {
   if (canceled) {
     return
   } else {
-    return filePaths[0]
+    win?.webContents.send('dialog:path', arg, filePaths)
+    return filePaths
   }
 })
 

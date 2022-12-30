@@ -163,16 +163,20 @@ ipcMain.handle('dialog:openDirectory', async (_, arg) => {
 
 // child process
 const exec = require("child_process").exec
+const iconv = require('iconv-lite')
 ipcMain.handle('shell:exec', (_, arg) => {
-  exec(arg, function(error, stdout, stderr){
+  exec(arg, { encoding: "buffer" }, function(error, stdout, stderr){
     if(error) {
       console.error('error: ' + error);
       return;
     }
-    console.log('stdout: ' + stdout);
-    console.log('stderr: ' + typeof stderr);
 
-    win?.webContents.send('shell:stdout', {error: error, stdout: stdout, stderr: stderr})
+    const decoded_stdout = iconv.decode(stdout, 'cp936')
+    const decoded_stderr = iconv.decode(stderr, 'cp936')
+    console.log('stdout: ' + decoded_stdout);
+    console.log('stderr: ' + decoded_stderr);
+
+    win?.webContents.send('shell:stdout', {error: error, stdout: decoded_stdout, stderr: decoded_stderr})
   });
 })
 

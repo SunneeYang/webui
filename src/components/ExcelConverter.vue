@@ -319,10 +319,31 @@ function OnTransformStart() {
   }
   finalConfig.sheets = obj
 
-  fs.writeFile('config.txt', JSON.stringify(finalConfig, null, 2), {flag: 'w+'}, function () {
+  let workspace = ''
+  switch (platform.value) {
+    case 'client':
+      workspace = finalConfig.path.client;
+      break;
+    case 'server':
+      workspace = path.join(finalConfig.path.server, 'Tools/ExcelExporter/publish', process.platform === 'darwin' ? 'osx-x64' : 'win-x64');
+      break;
+  }
+
+  if (workspace == '') {
+    ElMessage({
+      message: '目标目录不存在',
+      type: 'error',
+      center: true,
+      grouping: true,
+      duration: 1000
+    })
+    return
+  }
+
+  fs.writeFile('config.json', JSON.stringify(finalConfig, null, 2), {flag: 'w+'}, function () {
     console.log('write done!')
 
-    useIpcRendererInvoke('shell:exec', 'dotnet C:\\Work\\brick\\Tools\\ExcelExporter\\bin\\Release\\net7.0\\publish\\ExcelExporter.dll')
+    useIpcRendererInvoke('shell:exec', path.join(workspace, process.platform === 'darwin' ? 'ExcelExporter' : 'ExcelExporter'))
   })
 }
 

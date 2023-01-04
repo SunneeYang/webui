@@ -40,6 +40,7 @@
     "@vueuse/core": "^9.8.2",
     "@vueuse/electron": "^9.9.0",
     "element-plus": "^2.2.27",
+    "iconv-lite": "^0.6.3",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   }
 }

@@ -6,7 +6,7 @@
           <div class="card-header">
             <el-row :gutter="20">
               <el-col :span="4">
-                <el-tag id="head-tag" effect="dark" size="large">Excel</el-tag>
+                <el-tag id="head-tag" effect="dark" size="large">ExcelExporter</el-tag>
               </el-col>
               <el-col :span="2" class="head-opt">
                 <el-switch
@@ -46,7 +46,7 @@
           </div>
         </template>
         <el-input v-model="filter_text" />
-        <el-scrollbar max-height="440px">
+        <el-scrollbar max-height="740px">
           <div>
             <el-tree
                 ref="excel_tree_ref"
@@ -91,7 +91,7 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="setting_visible = false">取消</el-button>
+          <el-button @click="OnSettingCancel">取消</el-button>
           <el-button type="primary" @click="OnSettingConfirm">确定</el-button>
         </span>
       </template>
@@ -120,11 +120,11 @@ const fs = require('fs');
 const xlsx = require('xlsx')
 
 // options
-const platform = ref('s cerver')
+const platform = ref('client')
 
 const gen_cs = ref(false)
-const gen_csv = ref(false)
-const gen_json = ref(false)
+const gen_csv = ref(true)
+const gen_json = ref(true)
 
 // setting
 const setting_visible = ref(false)
@@ -176,6 +176,13 @@ tryOnMounted(() => {
   setting_form.excel_path = setting_content.value.excel_path
   setting_form.server_path = setting_content.value.server_path
   setting_form.client_path = setting_content.value.client_path
+
+  if (setting_form.excel_path == '') {
+    OnSettingClick()
+  }
+  else {
+    OnRefreshClick()
+  }
 })
 
 function OnGenToChange(type:string)
@@ -232,11 +239,45 @@ function OnSettingClick()
 
 function OnSettingConfirm()
 {
-  setting_visible.value = false
+  if (setting_form.excel_path == '') {
+    ElMessage({
+      message: '请配置Excel存放地址',
+      type: 'error',
+      center: true,
+      grouping: true,
+      duration: 1000
+    })
+    return
+  }
 
   setting_content.value.excel_path = setting_form.excel_path
   setting_content.value.server_path = setting_form.server_path
   setting_content.value.client_path = setting_form.client_path
+
+  setting_visible.value = false
+
+  OnRefreshClick();
+}
+
+function OnSettingCancel()
+{
+  if (setting_form.excel_path == '') {
+    ElMessage({
+      message: '请配置Excel存放地址',
+      type: 'error',
+      center: true,
+      grouping: true,
+      duration: 1000
+    })
+    return
+  }
+
+  if (setting_content.value.excel_path == '') {
+    setting_content.value.excel_path = setting_form.excel_path
+    OnRefreshClick()
+  }
+
+  setting_visible.value = false
 }
 
 async function OpenDirectorySelecter( type:string )
@@ -271,6 +312,38 @@ function OnTransformStart() {
       duration: 1000
     })
     return
+  }
+
+  switch (platform.value) {
+    case 'client':
+      if (setting_form.client_path == '') {
+        ElMessage({
+          message: '请配置客户端地址',
+          type: 'error',
+          center: true,
+          grouping: true,
+          duration: 1000
+        })
+        return;
+      }
+      break
+
+    case 'server':
+      if (setting_form.server_path == '') {
+        ElMessage({
+          message: '请配置服务器地址',
+          type: 'error',
+          center: true,
+          grouping: true,
+          duration: 1000
+        })
+        return;
+      }
+      break
+
+    default:
+      console.error('invalid platform:' + platform.value)
+      return;
   }
 
   const transform_list = new Map<string, string[]>()
@@ -322,7 +395,7 @@ function OnTransformStart() {
   let workspace = ''
   switch (platform.value) {
     case 'client':
-      workspace = finalConfig.path.client;
+      workspace = path.join(finalConfig.path.client, 'Tools/ExcelExporter/publish', process.platform === 'darwin' ? 'osx-x64' : 'win-x64');
       break;
     case 'server':
       workspace = path.join(finalConfig.path.server, 'Tools/ExcelExporter/publish', process.platform === 'darwin' ? 'osx-x64' : 'win-x64');

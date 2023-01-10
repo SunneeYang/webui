@@ -94,6 +94,18 @@ menu.append(new MenuItem({
     click: () => { app.quit() }
   }]
 }))
+menu.append(new MenuItem({
+  label: '功能',
+  submenu: [{
+    label: 'Excel',
+    accelerator: 'F1',
+    click: () => { win.webContents.send('router:path', '/excel') }
+  },{
+    label: 'Config',
+    accelerator: 'F2',
+    click: () => { win.webContents.send('router:path', '/hello') }
+  }]
+}))
 
 Menu.setApplicationMenu(menu)
 

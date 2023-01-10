@@ -41,6 +41,7 @@
     "@vueuse/electron": "^9.9.0",
     "element-plus": "^2.2.27",
     "iconv-lite": "^0.6.3",
+    "vue-router": "^4.1.6",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   }
 }

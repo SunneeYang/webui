@@ -395,10 +395,10 @@ function OnTransformStart() {
   let workspace = ''
   switch (platform.value) {
     case 'client':
-      workspace = path.join(finalConfig.path.client, 'Tools/ExcelExporter/publish', process.platform === 'darwin' ? 'osx-x64' : 'win-x64');
+      workspace = path.join(finalConfig.path.client, 'Tools/ExcelExporter/export', process.platform === 'darwin' ? 'osx-x64' : 'win-x64');
       break;
     case 'server':
-      workspace = path.join(finalConfig.path.server, 'Tools/ExcelExporter/publish', process.platform === 'darwin' ? 'osx-x64' : 'win-x64');
+      workspace = path.join(finalConfig.path.server, 'Tools/ExcelExporter/export', process.platform === 'darwin' ? 'osx-x64' : 'win-x64');
       break;
   }
 

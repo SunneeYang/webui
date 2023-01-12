@@ -9,11 +9,13 @@ import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import {createRouter, createWebHashHistory} from 'vue-router'
 import HelloWorld from "./components/HelloWorld.vue";
 import ExcelConverter from "./components/ExcelConverter.vue";
+import ConfigEditor from "./components/ConfigEditor.vue";
 
 // router
 const routes = [
     { path: '/hello', component: HelloWorld },
     { path: '/excel', component: ExcelConverter },
+    { path: '/config', component: ConfigEditor },
 ]
 
 const router = createRouter({

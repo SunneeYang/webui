@@ -103,7 +103,7 @@ menu.append(new MenuItem({
   },{
     label: 'Config',
     accelerator: 'F2',
-    click: () => { win.webContents.send('router:path', '/hello') }
+    click: () => { win.webContents.send('router:path', '/config') }
   }]
 }))
 

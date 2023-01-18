@@ -45,7 +45,9 @@
             <Balance :balance="cfg_balance" @submit="OnBalanceSubmit"/>
           </el-tab-pane>
 
-          <el-tab-pane label="Redis">Redis</el-tab-pane>
+          <el-tab-pane label="Redis">
+            <Redis/>
+          </el-tab-pane>
           <el-tab-pane label="Mongodb">Mongodb</el-tab-pane>
 
           <el-tab-pane label="Middleware">
@@ -92,6 +94,7 @@ import * as path from "path";
 import {BalanceCfg, MiddlewareCfg, MongoDbCfg, RedisCfg} from "../../module/definition";
 import Balance from "./Balance.vue";
 import Middleware from "./Middleware.vue";
+import Redis from "./Redis.vue";
 
 const fs = require('fs');
 const yaml = require('js-yaml');
@@ -233,12 +236,11 @@ function OnBalanceSubmit(balance: BalanceCfg) {
 }
 
 function OnMiddlewareSubmit(index: number, middleware: MiddlewareCfg) {
-  if (index >= cfg_middleware.value.length) {
-    console.error('OnMiddlewareSubmit index out of range!')
-    return
+  if (index < cfg_middleware.value.length) {
+    cfg_middleware.value[index] = middleware
+  } else {
+    cfg_middleware.value.push(middleware)
   }
-
-  cfg_middleware.value[index] = middleware
 }
 
 function OnMiddlewareRemove(key: string) {

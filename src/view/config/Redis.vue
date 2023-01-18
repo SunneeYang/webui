@@ -2,30 +2,54 @@
   <el-scrollbar height="720px">
     <el-row :gutter="20">
       <el-col v-for="(r, i) in redis" :key="r.name" :span="6">
-        <el-card class="card-redis" shadow="always">
-          <template #header>
-            <div class="card-header">
-              <el-row :gutter="20" style="height: 50px; line-height: 50px">
-                <el-col :span="14">
-                  <el-tag>{{ r.name }}</el-tag>
-                </el-col>
-                <el-col :span="10" class="card-op">
-                  <el-button-group size="small" type="primary">
-                    <el-button :icon="Edit" @click="OnEdit(i)"/>
-                    <el-button :icon="Delete" @click="OnDelete(i)"/>
-                  </el-button-group>
-                </el-col>
-              </el-row>
-            </div>
+        <el-descriptions :column="1" :title="r.name" border class="redis-info">
+          <template #extra>
+            <el-button-group size="small" type="primary">
+              <el-button :icon="Edit" @click="OnEdit(i)"/>
+              <el-button :icon="Delete" @click="OnDelete(i)"/>
+            </el-button-group>
           </template>
-          <el-scrollbar height="150px">
-            <p>{{ r.name }}</p>
-            <p>{{ r.url }}</p>
-            <ul>
-              <li v-for="m in r.names">{{ m }}</li>
-            </ul>
-          </el-scrollbar>
-        </el-card>
+          <el-descriptions-item class-name="redis-config" label-class-name="redis-label">
+            <template #label>
+              <div>
+                <el-icon>
+                  <Paperclip/>
+                </el-icon>
+                Url
+              </div>
+            </template>
+            {{ r.url }}
+          </el-descriptions-item>
+          <el-descriptions-item label-class-name="redis-label">
+            <template #label>
+              <div>
+                <el-icon>
+                  <Coin/>
+                </el-icon>
+                DB
+              </div>
+            </template>
+            {{ r.db }}
+          </el-descriptions-item>
+          <el-descriptions-item label-class-name="redis-label">
+            <template #label>
+              <div>
+                <el-icon>
+                  <Grid/>
+                </el-icon>
+                Names
+              </div>
+            </template>
+            <el-popover :width="300" title="模块" trigger="hover">
+              <template #reference>
+                <div class="redis-module">{{ r.names.join(',') }}</div>
+              </template>
+              <template #default>
+                <el-tag v-for="m in r.names" class="model-tag">{{ m }}</el-tag>
+              </template>
+            </el-popover>
+          </el-descriptions-item>
+        </el-descriptions>
       </el-col>
       <el-col :span="6">
         <el-card class="card-add" shadow="always">
@@ -47,7 +71,12 @@ import {Delete, Edit} from '@element-plus/icons-vue';
 import {RedisCfg} from "../../module/definition";
 
 const redis = ref<RedisCfg[]>([
-  {name: 'r1', url: 'r1:6379', db: 0, names: ['A', 'B', 'C']},
+  {
+    name: 'main-module-abcdefg-hijklmn',
+    url: 'http://repo.abcdedjfsaklfhjaskl.cn:6379',
+    db: 0,
+    names: ['Player', 'Item', 'Money', 'Shop', 'Hero', 'CardGroup', 'AdventureStory', 'AdventureStage', 'AdventureChapter']
+  },
   {name: 'r2', url: 'r2:6379', db: 1, names: ['D', 'E', 'F']},
   {name: 'r3', url: 'r3:6379', db: 2, names: ['G', 'H', 'I']},
   {name: 'r4', url: 'r4:6379', db: 3, names: ['J', 'K', 'L']},
@@ -75,13 +104,37 @@ function OnDelete(index: number) {
   margin-bottom: 20px;
 }
 
-.card-redis {
-  min-width: 100px;
-  min-height: 100px;
+.redis-info :deep(.el-descriptions__title) {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:deep(.redis-config) {
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:deep(.redis-label) {
+  width: 90px;
+}
+
+.redis-module {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-tag {
+  margin: 2px 2px;
 }
 
 .card-add {
-  height: 241px;
+  height: 160px;
   min-width: 100px;
   display: flex;
   justify-content: center;
@@ -91,14 +144,6 @@ function OnDelete(index: number) {
 .add-btn {
   width: 220px;
   height: 150px;
-}
-
-.card-op {
-  text-align: right;
-}
-
-.card-redis :deep(.el-card__header) {
-  padding: 0 10px;
 }
 
 </style>

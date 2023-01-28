@@ -46,7 +46,7 @@
           </el-tab-pane>
 
           <el-tab-pane label="Redis">
-            <Redis/>
+            <Redis :redis="cfg_redis" @change="OnRedisChange"/>
           </el-tab-pane>
           <el-tab-pane label="Mongodb">Mongodb</el-tab-pane>
 
@@ -112,6 +112,7 @@ const setting_content = useStorage('tool-setting', {
 })
 
 const cfg_balance: Ref<BalanceCfg> = ref({hashring: [], hashslot: [], random: []})
+const cfg_redis: Ref<RedisCfg[]> = ref([]);
 const cfg_middleware: Ref<MiddlewareCfg[]> = ref([])
 
 interface ConfigAll {
@@ -148,7 +149,7 @@ function OnRefreshClick() {
     cfg_balance.value = doc.balance
 
     // redis
-    const r: RedisCfg[] = doc.redis
+    cfg_redis.value = doc.redis
 
     // mongodb
     const m: MongoDbCfg[] = doc.mongodb
@@ -222,6 +223,7 @@ function OnSave() {
   }
 
   cfg_all.balance = cfg_balance.value
+  cfg_all.redis = cfg_redis.value
   cfg_all.middleware = cfg_middleware.value
 
   const content = yaml.dump(cfg_all, {lineWidth: -1})
@@ -233,6 +235,10 @@ function OnSave() {
 
 function OnBalanceSubmit(balance: BalanceCfg) {
   cfg_balance.value = balance
+}
+
+function OnRedisChange(redis: RedisCfg[]) {
+  cfg_redis.value = redis
 }
 
 function OnMiddlewareSubmit(index: number, middleware: MiddlewareCfg) {

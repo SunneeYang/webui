@@ -9,7 +9,6 @@ export interface BalanceCfg {
 
 export interface RedisCfg
 {
-    name: string,
     url: string,
     db: number,
     names: string[],

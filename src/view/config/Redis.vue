@@ -53,7 +53,7 @@
       </el-col>
       <el-col :span="6">
         <el-card class="card-add" shadow="always">
-          <el-button bg class="add-btn" link>
+          <el-button bg class="add-btn" link @click="OnAdd">
             <el-icon size="50">
               <Plus/>
             </el-icon>
@@ -62,34 +62,131 @@
       </el-col>
     </el-row>
   </el-scrollbar>
+
+  <el-dialog
+      v-model="editor_visible"
+      :title="redis_form.name"
+      width="80%"
+  >
+    <el-form :model="redis_form" label-position="left" label-width="120px">
+      <el-form-item label="Url">
+        <el-input v-model="redis_form.url"/>
+      </el-form-item>
+      <el-form-item label="Db">
+        <el-input v-model="redis_form.db"/>
+      </el-form-item>
+      <el-form-item label="Names">
+        <el-input v-model="redis_form.names"/>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="OnEditConfirm">确认</el-button>
+        <el-button @click="OnEditCancel">取消</el-button>
+      </el-form-item>
+    </el-form>
+  </el-dialog>
 </template>
 
 <script lang="ts" setup>
 
-import {ref} from "vue";
+import {ref, watch} from "vue";
 import {Delete, Edit} from '@element-plus/icons-vue';
 import {RedisCfg} from "../../module/definition";
 
-const redis = ref<RedisCfg[]>([
-  {
-    name: 'main-module-abcdefg-hijklmn',
-    url: 'http://repo.abcdedjfsaklfhjaskl.cn:6379',
-    db: 0,
-    names: ['Player', 'Item', 'Money', 'Shop', 'Hero', 'CardGroup', 'AdventureStory', 'AdventureStage', 'AdventureChapter']
-  },
-  {name: 'r2', url: 'r2:6379', db: 1, names: ['D', 'E', 'F']},
-  {name: 'r3', url: 'r3:6379', db: 2, names: ['G', 'H', 'I']},
-  {name: 'r4', url: 'r4:6379', db: 3, names: ['J', 'K', 'L']},
-  {name: 'r5', url: 'r5:6379', db: 4, names: ['M', 'N', 'O']},
-  {name: 'r6', url: 'r6:6379', db: 5, names: ['P', 'Q', 'R']},
-])
+const props = defineProps<{ redis: RedisCfg[] }>()
+const emit = defineEmits(['change'])
+
+interface RedisInfo {
+  name: string,
+  url: string,
+  db: number,
+  names: string[],
+}
+
+const redis = ref<RedisInfo[]>([])
+
+const redis_index = ref(1);
+const editor_visible = ref(false);
+const redis_form = ref({name: '', url: '', db: 0, names: ''});
+const redis_form_index = ref(0);
+
+watch(props, () => {
+  redis_index.value = 1
+  redis.value = []
+  props.redis.forEach(r => {
+    redis.value.push({
+      name: `Redis-${redis_index.value++}`,
+      url: r.url,
+      db: r.db,
+      names: r.names
+    })
+  })
+})
+
+function OnAdd() {
+  redis_form_index.value = -1
+
+  redis_form.value.name = `Redis-${redis_index.value}`;
+  redis_form.value.url = '';
+  redis_form.value.db = 0;
+  redis_form.value.names = '';
+
+  editor_visible.value = true
+}
 
 function OnEdit(index: number) {
-  console.log('edit:' + index)
+  redis_form_index.value = index
+  const content = redis.value[index];
+
+  redis_form.value.url = content.url;
+  redis_form.value.db = content.db;
+  redis_form.value.names = content.names.join(',');
+
+  editor_visible.value = true
 }
 
 function OnDelete(index: number) {
-  console.log('delete:' + index)
+  redis.value.splice(index, 1)
+
+  OnChange();
+}
+
+function OnEditConfirm() {
+
+  if (redis_form_index.value >= 0) {
+    const content = redis.value[redis_form_index.value];
+    content.url = redis_form.value.url
+    content.db = redis_form.value.db
+    content.names = redis_form.value.names.split(',')
+  } else {
+    redis.value.push({
+      name: redis_form.value.name,
+      url: redis_form.value.url,
+      db: redis_form.value.db,
+      names: redis_form.value.names.split(',')
+    })
+    redis_index.value++;
+  }
+
+  OnChange();
+
+  editor_visible.value = false
+}
+
+function OnEditCancel() {
+  editor_visible.value = false
+}
+
+function OnChange() {
+  const all_redis: RedisCfg[] = []
+  redis.value.forEach(r => {
+    all_redis.push({
+      url: r.url,
+      db: r.db,
+      names: r.names
+    })
+  })
+
+  emit('change', all_redis)
 }
 
 </script>

@@ -1,15 +1,15 @@
 <template>
   <el-scrollbar height="720px">
     <el-row :gutter="20">
-      <el-col v-for="(r, i) in redis" :key="r.name" :span="8">
-        <el-descriptions :column="1" :title="r.name" border class="redis-info">
+      <el-col v-for="(r, i) in mongodb" :key="r.name" :span="8">
+        <el-descriptions :column="1" :title="r.name" border class="mongodb-info">
           <template #extra>
             <el-button-group size="small" type="primary">
               <el-button :icon="Edit" @click="OnEdit(i)"/>
               <el-button :icon="Delete" @click="OnDelete(i)"/>
             </el-button-group>
           </template>
-          <el-descriptions-item class-name="redis-config" label-class-name="redis-label">
+          <el-descriptions-item class-name="mongodb-config" label-class-name="mongodb-label">
             <template #label>
               <div>
                 <el-icon>
@@ -20,7 +20,7 @@
             </template>
             {{ r.url }}
           </el-descriptions-item>
-          <el-descriptions-item label-class-name="redis-label">
+          <el-descriptions-item label-class-name="mongodb-label">
             <template #label>
               <div>
                 <el-icon>
@@ -31,7 +31,7 @@
             </template>
             {{ r.db }}
           </el-descriptions-item>
-          <el-descriptions-item label-class-name="redis-label">
+          <el-descriptions-item label-class-name="mongodb-label">
             <template #label>
               <div>
                 <el-icon>
@@ -42,7 +42,7 @@
             </template>
             <el-popover :width="300" title="模块" trigger="hover">
               <template #reference>
-                <div class="redis-module">{{ r.names.join(',') }}</div>
+                <div class="mongodb-module">{{ r.names.join(',') }}</div>
               </template>
               <template #default>
                 <el-tag v-for="m in r.names" class="model-tag">{{ m }}</el-tag>
@@ -65,18 +65,18 @@
 
   <el-dialog
       v-model="editor_visible"
-      :title="redis_form.name"
+      :title="mongodb_form.name"
       width="80%"
   >
-    <el-form :model="redis_form" label-position="left" label-width="120px">
+    <el-form :model="mongodb_form" label-position="left" label-width="120px">
       <el-form-item label="Url">
-        <el-input v-model="redis_form.url"/>
+        <el-input v-model="mongodb_form.url"/>
       </el-form-item>
       <el-form-item label="Db">
-        <el-input v-model="redis_form.db"/>
+        <el-input v-model="mongodb_form.db"/>
       </el-form-item>
       <el-form-item label="Names">
-        <el-input v-model="redis_form.names"/>
+        <el-input v-model="mongodb_form.names"/>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="OnEditConfirm">确认</el-button>
@@ -90,31 +90,31 @@
 
 import {ref, watch} from "vue";
 import {Delete, Edit} from '@element-plus/icons-vue';
-import {RedisCfg} from "../../module/definition";
+import {MongoDbCfg} from "../../module/definition";
 
-const props = defineProps<{ redis: RedisCfg[] }>()
+const props = defineProps<{ mongodb: MongoDbCfg[] }>()
 const emit = defineEmits(['change'])
 
-interface RedisInfo {
+interface MongoDbInfo {
   name: string,
   url: string,
-  db: number,
+  db: string,
   names: string[],
 }
 
-const redis = ref<RedisInfo[]>([])
+const mongodb = ref<MongoDbInfo[]>([])
 
-const redis_index = ref(1);
+const mongodb_index = ref(1);
 const editor_visible = ref(false);
-const redis_form = ref({name: '', url: '', db: 0, names: ''});
-const redis_form_index = ref(0);
+const mongodb_form = ref({name: '', url: '', db: '', names: ''});
+const mongodb_form_index = ref(0);
 
 watch(props, () => {
-  redis_index.value = 1
-  redis.value = []
-  props.redis.forEach(r => {
-    redis.value.push({
-      name: `Redis-${redis_index.value++}`,
+  mongodb_index.value = 1
+  mongodb.value = []
+  props.mongodb.forEach(r => {
+    mongodb.value.push({
+      name: `MongoDB-${mongodb_index.value++}`,
       url: r.url,
       db: r.db,
       names: r.names
@@ -123,48 +123,48 @@ watch(props, () => {
 })
 
 function OnAdd() {
-  redis_form_index.value = -1
+  mongodb_form_index.value = -1
 
-  redis_form.value.name = `Redis-${redis_index.value}`;
-  redis_form.value.url = '';
-  redis_form.value.db = 0;
-  redis_form.value.names = '';
+  mongodb_form.value.name = `MongoDB-${mongodb_index.value}`;
+  mongodb_form.value.url = '';
+  mongodb_form.value.db = '';
+  mongodb_form.value.names = '';
 
   editor_visible.value = true
 }
 
 function OnEdit(index: number) {
-  redis_form_index.value = index
-  const content = redis.value[index];
+  mongodb_form_index.value = index
+  const content = mongodb.value[index];
 
-  redis_form.value.url = content.url;
-  redis_form.value.db = content.db;
-  redis_form.value.names = content.names.join(',');
+  mongodb_form.value.url = content.url;
+  mongodb_form.value.db = content.db;
+  mongodb_form.value.names = content.names.join(',');
 
   editor_visible.value = true
 }
 
 function OnDelete(index: number) {
-  redis.value.splice(index, 1)
+  mongodb.value.splice(index, 1)
 
   OnChange();
 }
 
 function OnEditConfirm() {
 
-  if (redis_form_index.value >= 0) {
-    const content = redis.value[redis_form_index.value];
-    content.url = redis_form.value.url
-    content.db = redis_form.value.db
-    content.names = redis_form.value.names.split(',')
+  if (mongodb_form_index.value >= 0) {
+    const content = mongodb.value[mongodb_form_index.value];
+    content.url = mongodb_form.value.url
+    content.db = mongodb_form.value.db
+    content.names = mongodb_form.value.names.split(',')
   } else {
-    redis.value.push({
-      name: redis_form.value.name,
-      url: redis_form.value.url,
-      db: redis_form.value.db,
-      names: redis_form.value.names.split(',')
+    mongodb.value.push({
+      name: mongodb_form.value.name,
+      url: mongodb_form.value.url,
+      db: mongodb_form.value.db,
+      names: mongodb_form.value.names.split(',')
     })
-    redis_index.value++;
+    mongodb_index.value++;
   }
 
   OnChange();
@@ -177,16 +177,16 @@ function OnEditCancel() {
 }
 
 function OnChange() {
-  const all_redis: RedisCfg[] = []
-  redis.value.forEach(r => {
-    all_redis.push({
+  const all_mongodb: MongoDbCfg[] = []
+  mongodb.value.forEach(r => {
+    all_mongodb.push({
       url: r.url,
       db: r.db,
       names: r.names
     })
   })
 
-  emit('change', all_redis)
+  emit('change', all_mongodb)
 }
 
 </script>
@@ -201,25 +201,25 @@ function OnChange() {
   margin-bottom: 20px;
 }
 
-.redis-info :deep(.el-descriptions__title) {
+.mongodb-info :deep(.el-descriptions__title) {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-:deep(.redis-config) {
-  max-width: 500px;
+:deep(.mongodb-config) {
+  max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-:deep(.redis-label) {
+:deep(.mongodb-label) {
   width: 90px;
 }
 
-.redis-module {
+.mongodb-module {
   max-width: 270px;
   overflow: hidden;
   text-overflow: ellipsis;

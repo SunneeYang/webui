@@ -48,7 +48,10 @@
           <el-tab-pane label="Redis">
             <Redis :redis="cfg_redis" @change="OnRedisChange"/>
           </el-tab-pane>
-          <el-tab-pane label="Mongodb">Mongodb</el-tab-pane>
+          
+          <el-tab-pane label="Mongodb">
+            <MongoDb :mongodb="cfg_mongodb" @change="OnMongoDbChange"/>
+          </el-tab-pane>
 
           <el-tab-pane label="Middleware">
             <Middleware :middleware="cfg_middleware" @remove="OnMiddlewareRemove"
@@ -95,6 +98,7 @@ import {BalanceCfg, MiddlewareCfg, MongoDbCfg, RedisCfg} from "../../module/defi
 import Balance from "./Balance.vue";
 import Middleware from "./Middleware.vue";
 import Redis from "./Redis.vue";
+import MongoDb from "./MongoDb.vue";
 
 const fs = require('fs');
 const yaml = require('js-yaml');
@@ -113,6 +117,7 @@ const setting_content = useStorage('tool-setting', {
 
 const cfg_balance: Ref<BalanceCfg> = ref({hashring: [], hashslot: [], random: []})
 const cfg_redis: Ref<RedisCfg[]> = ref([]);
+const cfg_mongodb: Ref<MongoDbCfg[]> = ref([]);
 const cfg_middleware: Ref<MiddlewareCfg[]> = ref([])
 
 interface ConfigAll {
@@ -152,7 +157,7 @@ function OnRefreshClick() {
     cfg_redis.value = doc.redis
 
     // mongodb
-    const m: MongoDbCfg[] = doc.mongodb
+    cfg_mongodb.value = doc.mongodb
 
     // middleware
     cfg_middleware.value = doc.middleware
@@ -224,6 +229,7 @@ function OnSave() {
 
   cfg_all.balance = cfg_balance.value
   cfg_all.redis = cfg_redis.value
+  cfg_all.mongodb = cfg_mongodb.value
   cfg_all.middleware = cfg_middleware.value
 
   const content = yaml.dump(cfg_all, {lineWidth: -1})
@@ -239,6 +245,10 @@ function OnBalanceSubmit(balance: BalanceCfg) {
 
 function OnRedisChange(redis: RedisCfg[]) {
   cfg_redis.value = redis
+}
+
+function OnMongoDbChange(mongodb: MongoDbCfg[]) {
+  cfg_mongodb.value = mongodb
 }
 
 function OnMiddlewareSubmit(index: number, middleware: MiddlewareCfg) {

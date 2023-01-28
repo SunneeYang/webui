@@ -1,169 +1,250 @@
 <template>
-  <el-tabs v-model="cfg_middleware_current" editable tab-position="left" @edit="OnMiddlewareTabsEdit"
-           @tab-change="OnMiddlewareTabsChange">
-    <el-tab-pane
-        v-for="cfg in cfg_middleware"
-        :key="cfg.name"
-        :label="cfg.name"
-        :name="cfg.name"
-    >
-      <el-form ref="formRef" :model="cfg_middleware_form" label-width="90px">
-        <el-form-item label="Type" required>
-          <el-select v-model="cfg_middleware_form.type">
-            <el-option
-                v-for="item in MiddlewareTypes"
-                :key="item.label"
-                :disabled="item.disabled"
-                :label="item.label"
-                :value="item.label"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="Name" required>
-          <el-input v-model="cfg_middleware_form.name"/>
-        </el-form-item>
-        <el-form-item label="Config">
-          <el-input v-model="cfg_middleware_form.config" autosize type="textarea"/>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="OnMiddlewareSave">确定</el-button>
-          <el-button @click="OnMiddlewareCancel">取消</el-button>
-        </el-form-item>
-      </el-form>
-    </el-tab-pane>
-  </el-tabs>
+  <el-scrollbar height="720px">
+    <el-row :gutter="20">
+      <el-col v-for="(r, i) in middleware" :key="r.name" :span="8">
+        <el-descriptions :column="1" :title="r.name" border class="middleware-info">
+          <template #extra>
+            <el-button-group size="small" type="primary">
+              <el-button :icon="Edit" @click="OnEdit(i)"/>
+              <el-button :icon="Delete" @click="OnDelete(i)"/>
+            </el-button-group>
+          </template>
+          <el-descriptions-item class-name="middleware-config" label-class-name="middleware-label">
+            <template #label>
+              <div>
+                <el-icon>
+                  <List/>
+                </el-icon>
+                Type
+              </div>
+            </template>
+            {{ r.type }}
+          </el-descriptions-item>
+          <el-descriptions-item label-class-name="middleware-label">
+            <template #label>
+              <div>
+                <el-icon>
+                  <Postcard/>
+                </el-icon>
+                Name
+              </div>
+            </template>
+            {{ r.name }}
+          </el-descriptions-item>
+          <el-descriptions-item label-class-name="middleware-label">
+            <template #label>
+              <div>
+                <el-icon>
+                  <Histogram/>
+                </el-icon>
+                Config
+              </div>
+            </template>
+            <el-popover :width="450" title="配置" trigger="hover">
+              <template #reference>
+                <div class="middleware-module">{{ r.config }}</div>
+              </template>
+              <template #default>
+                <p class="model-tag">{{ r.config }}</p>
+              </template>
+            </el-popover>
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-col>
+      <el-col :span="8">
+        <el-card class="card-add" shadow="always">
+          <el-button bg class="add-btn" link @click="OnAdd">
+            <el-icon size="50">
+              <Plus/>
+            </el-icon>
+          </el-button>
+        </el-card>
+      </el-col>
+    </el-row>
+  </el-scrollbar>
+
+  <el-dialog
+      v-model="editor_visible"
+      :title="middleware_form.name"
+      width="80%"
+  >
+    <el-form :model="middleware_form" label-position="left" label-width="120px">
+      <el-form-item label="Type">
+        <el-input v-model="middleware_form.type" :prefix-icon="List"/>
+      </el-form-item>
+      <el-form-item label="Name">
+        <el-input v-model="middleware_form.name" :prefix-icon="Postcard"/>
+      </el-form-item>
+      <el-form-item label="Config">
+        <el-input v-model="middleware_form.config" :autosize="{ minRows: 1, maxRows: 18 }"
+                  :prefix-icon="Histogram"
+                  placeholder="Please input JSON"
+                  type="textarea"/>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="OnEditConfirm">确认</el-button>
+        <el-button @click="OnEditCancel">取消</el-button>
+      </el-form-item>
+    </el-form>
+  </el-dialog>
 </template>
 
 <script lang="ts" setup>
-import {ref, Ref, watch} from "vue";
+
+import {Ref, ref, watch} from "vue";
+import {Delete, Edit, Histogram, List, Postcard} from '@element-plus/icons-vue';
 import {MiddlewareCfg} from "../../module/definition";
 import {ElMessage} from "element-plus";
 
 const props = defineProps<{ middleware: MiddlewareCfg[] }>()
-const emit = defineEmits(['submit', 'remove'])
+const emit = defineEmits(['change'])
 
-const MiddlewareTypes = [
-  {label: 'U8Server'},
-  {label: 'Etcd'},
-  {label: 'Prometheus'},
-  {label: 'Kafka', disabled: true},
-  {label: 'Apm', disabled: true},
-]
+const middleware = ref<MiddlewareCfg[]>([])
 
-const cfg_middleware: Ref<MiddlewareCfg[]> = ref([])
-const cfg_middleware_current = ref("")
-let cfg_middleware_index = 0
-const cfg_middleware_form: Ref<MiddlewareCfg> = ref({type: '', name: '', config: ''});
+const middleware_index = ref(1);
+const editor_visible = ref(false);
+const middleware_form: Ref<MiddlewareCfg> = ref<MiddlewareCfg>({name: '', type: '', config: ''});
+const middleware_form_index = ref(0);
 
 watch(props, () => {
-  cfg_middleware.value = props.middleware
-
-  const exist = cfg_middleware.value.filter(m => m.name == cfg_middleware_current.value)
-  if (exist.length == 0) {
-    cfg_middleware_current.value = cfg_middleware.value[0]?.name ?? ""
-  }
-
-  OnMiddlewareCancel()
+  middleware.value = props.middleware
+  middleware_index.value = middleware.value.length + 1
 })
 
-function OnMiddlewareTabsEdit(targetName: string, action: 'remove' | 'add') {
-  switch (action) {
-    case "remove":
-      // remove current tab
-      let activeName = cfg_middleware_current.value
-      if (targetName == activeName) {
-        // find next tab
-        const tabs = cfg_middleware.value
-        tabs.forEach((tab, index) => {
-          if (tab.name === targetName) {
-            const nextTab = tabs[index + 1] || tabs[index - 1]
-            if (nextTab) {
-              activeName = nextTab.name
-            }
-          }
-        })
-      }
+function OnAdd() {
+  middleware_form_index.value = -1
 
-      emit('remove', targetName)
+  middleware_form.value.name = `Middleware-${middleware_index.value}`;
+  middleware_form.value.type = '';
+  middleware_form.value.config = '';
 
-      cfg_middleware_current.value = activeName
-
-      break;
-
-    case "add":
-      const newTabName = `Config${++cfg_middleware_index}`
-      cfg_middleware.value.push({
-        type: '',
-        name: newTabName,
-        config: '',
-      })
-      cfg_middleware_current.value = newTabName
-      break;
-  }
+  editor_visible.value = true
 }
 
-function OnMiddlewareTabsChange(name: string) {
-  cfg_middleware.value.forEach((tab, index) => {
-    if (tab.name == name) {
-      cfg_middleware_form.value.type = tab.type
-      cfg_middleware_form.value.name = tab.name
-      cfg_middleware_form.value.config = tab.config
-      return
-    }
-  })
+function OnEdit(index: number) {
+  middleware_form_index.value = index
+  const content = middleware.value[middleware_form_index.value];
+
+  middleware_form.value.type = content.type;
+  middleware_form.value.name = content.name;
+  middleware_form.value.config = content.config;
+
+  editor_visible.value = true
 }
 
-function OnMiddlewareSave() {
-  let cur_index = -1
-  let unique_name = true
-  cfg_middleware.value.forEach((tab, index) => {
-    if (!unique_name) {
-      return
-    }
-    if (tab.name == cfg_middleware_form.value.name && tab.name != cfg_middleware_current.value) {
-      unique_name = false
-    }
-    if (tab.name == cfg_middleware_current.value) {
-      cur_index = index
-    }
-  })
+function OnDelete(index: number) {
+  middleware.value.splice(index, 1)
 
-  if (!unique_name) {
+  OnChange();
+}
+
+function OnEditConfirm() {
+
+  // denied default name
+  if (/^Middleware-\d+/i.test(middleware_form.value.name)) {
     ElMessage({
-      message: '中间件名称重复',
+      message: '请修改默认名称',
       type: 'error',
       center: true,
       grouping: true,
       duration: 1000
     })
+    return
   }
 
-  if (cur_index >= 0) {
-    const newConfig = cfg_middleware.value[cur_index]
-    newConfig.type = cfg_middleware_form.value.type
-    newConfig.name = cfg_middleware_form.value.name
-    newConfig.config = cfg_middleware_form.value.config
-    cfg_middleware_current.value = newConfig.name
-
-    emit('submit', cur_index, newConfig)
-  }
-}
-
-function OnMiddlewareCancel() {
-  cfg_middleware.value.forEach((tab, index) => {
-    if (tab.name == cfg_middleware_current.value) {
-      cfg_middleware_form.value.type = tab.type
-      cfg_middleware_form.value.name = tab.name
-      cfg_middleware_form.value.config = tab.config
-      return
+  // check repeat name
+  for (const m of middleware.value) {
+    if (m.name == middleware_form.value.name) {
+      ElMessage({
+        message: '名称不唯一',
+        type: 'error',
+        center: true,
+        grouping: true,
+        duration: 1000
+      })
+      return;
     }
-  })
+  }
+
+  if (middleware_form_index.value >= 0) {
+    const content = middleware.value[middleware_form_index.value];
+    content.type = middleware_form.value.type;
+    content.name = middleware_form.value.name;
+    content.config = middleware_form.value.config;
+  } else {
+    middleware.value.push({
+      type: middleware_form.value.type,
+      name: middleware_form.value.name,
+      config: middleware_form.value.config
+    })
+    middleware_index.value++;
+  }
+
+  OnChange();
+
+  editor_visible.value = false
 }
+
+function OnEditCancel() {
+  editor_visible.value = false
+}
+
+function OnChange() {
+  emit('change', middleware.value)
+}
+
 </script>
 
 <style scoped>
-.el-tabs--left :deep(.el-tabs__header.is-left) {
-  height: 720px;
-  overflow-y: auto;
+
+:deep(.el-scrollbar__bar.is-horizontal) {
+  display: none;
 }
+
+.el-col {
+  margin-bottom: 20px;
+}
+
+.middleware-info :deep(.el-descriptions__title) {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:deep(.middleware-config) {
+  max-width: 500px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:deep(.middleware-label) {
+  width: 90px;
+}
+
+.middleware-module {
+  max-width: 270px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-tag {
+  margin: 2px 2px;
+}
+
+.card-add {
+  height: 160px;
+  min-width: 382px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.add-btn {
+  width: 350px;
+  height: 150px;
+}
+
 </style>

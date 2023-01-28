@@ -48,14 +48,13 @@
           <el-tab-pane label="Redis">
             <Redis :redis="cfg_redis" @change="OnRedisChange"/>
           </el-tab-pane>
-          
+
           <el-tab-pane label="Mongodb">
             <MongoDb :mongodb="cfg_mongodb" @change="OnMongoDbChange"/>
           </el-tab-pane>
 
           <el-tab-pane label="Middleware">
-            <Middleware :middleware="cfg_middleware" @remove="OnMiddlewareRemove"
-                        @submit="OnMiddlewareSubmit"/>
+            <Middleware :middleware="cfg_middleware" @change="OnMiddlewareChange"/>
           </el-tab-pane>
         </el-tabs>
       </el-card>
@@ -161,7 +160,6 @@ function OnRefreshClick() {
 
     // middleware
     cfg_middleware.value = doc.middleware
-
   } catch (e) {
     console.log(e);
   }
@@ -251,16 +249,8 @@ function OnMongoDbChange(mongodb: MongoDbCfg[]) {
   cfg_mongodb.value = mongodb
 }
 
-function OnMiddlewareSubmit(index: number, middleware: MiddlewareCfg) {
-  if (index < cfg_middleware.value.length) {
-    cfg_middleware.value[index] = middleware
-  } else {
-    cfg_middleware.value.push(middleware)
-  }
-}
-
-function OnMiddlewareRemove(key: string) {
-  cfg_middleware.value = cfg_middleware.value.filter((tab) => tab.name !== key)
+function OnMiddlewareChange(middleware: MiddlewareCfg[]) {
+  cfg_middleware.value = middleware
 }
 
 </script>

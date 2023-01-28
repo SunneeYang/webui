@@ -70,13 +70,13 @@
   >
     <el-form :model="redis_form" label-position="left" label-width="120px">
       <el-form-item label="Url">
-        <el-input v-model="redis_form.url"/>
+        <el-input v-model="redis_form.url" :prefix-icon="Paperclip"/>
       </el-form-item>
       <el-form-item label="Db">
-        <el-input v-model="redis_form.db"/>
+        <el-input v-model="redis_form.db" :prefix-icon="Coin"/>
       </el-form-item>
       <el-form-item label="Names">
-        <el-input v-model="redis_form.names"/>
+        <el-input v-model="redis_form.names" :prefix-icon="Grid"/>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="OnEditConfirm">确认</el-button>
@@ -89,7 +89,7 @@
 <script lang="ts" setup>
 
 import {ref, watch} from "vue";
-import {Delete, Edit} from '@element-plus/icons-vue';
+import {Coin, Delete, Edit, Grid, Paperclip} from '@element-plus/icons-vue';
 import {RedisCfg} from "../../module/definition";
 
 const props = defineProps<{ redis: RedisCfg[] }>()

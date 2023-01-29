@@ -107,7 +107,14 @@ const middleware_form: Ref<MiddlewareCfg> = ref<MiddlewareCfg>({name: '', type: 
 const middleware_form_index = ref(0);
 
 watch(props, () => {
-  middleware.value = props.middleware
+  middleware.value = []
+  props.middleware.forEach(m => {
+    middleware.value.push({
+      type: m.type,
+      name: m.name,
+      config: m.config,
+    })
+  })
   middleware_index.value = middleware.value.length + 1
 })
 

@@ -22,9 +22,19 @@ export interface MongoDbCfg
 }
 
 // 中间件
-export interface MiddlewareCfg
-{
+export interface MiddlewareCfg {
     type: string,
     name: string,
     config: string,
+}
+
+// 其他配置
+export interface OtherCfg {
+    pipeline: string,
+    realm: RealmCfg,
+}
+
+// Realm Config
+export interface RealmCfg {
+    strategy: string,
 }

@@ -56,6 +56,11 @@
           <el-tab-pane label="Middleware">
             <Middleware :middleware="cfg_middleware" @change="OnMiddlewareChange"/>
           </el-tab-pane>
+
+          <el-tab-pane label="Other">
+            <Other :other="cfg_other" @change="OnOtherChange"/>
+          </el-tab-pane>
+
         </el-tabs>
       </el-card>
     </el-main>
@@ -93,11 +98,12 @@ import {tryOnMounted, useStorage} from '@vueuse/core';
 import {useIpcRendererInvoke, useIpcRendererOn} from "@vueuse/electron";
 import {ElMessage} from "element-plus";
 import * as path from "path";
-import {BalanceCfg, MiddlewareCfg, MongoDbCfg, RedisCfg} from "../../module/definition";
+import {BalanceCfg, MiddlewareCfg, MongoDbCfg, OtherCfg, RealmCfg, RedisCfg} from "../../module/definition";
 import Balance from "./Balance.vue";
 import Middleware from "./Middleware.vue";
 import Redis from "./Redis.vue";
 import MongoDb from "./MongoDb.vue";
+import Other from "./Other.vue";
 
 const fs = require('fs');
 const yaml = require('js-yaml');
@@ -118,10 +124,13 @@ const cfg_balance: Ref<BalanceCfg> = ref({hashring: [], hashslot: [], random: []
 const cfg_redis: Ref<RedisCfg[]> = ref([]);
 const cfg_mongodb: Ref<MongoDbCfg[]> = ref([]);
 const cfg_middleware: Ref<MiddlewareCfg[]> = ref([])
+const cfg_other: Ref<OtherCfg> = ref({pipeline: '', realm: {strategy: ''}});
 
 interface ConfigAll {
   node: object[],
   balance: BalanceCfg,
+  realm: RealmCfg,
+  pipeline: string,
   redis: RedisCfg[],
   mongodb: MongoDbCfg[],
   middleware: MiddlewareCfg[],
@@ -160,6 +169,11 @@ function OnRefreshClick() {
 
     // middleware
     cfg_middleware.value = doc.middleware
+
+    // other
+    cfg_other.value.pipeline = doc.pipeline
+    cfg_other.value.realm = doc.realm
+
   } catch (e) {
     console.log(e);
   }
@@ -222,10 +236,18 @@ useIpcRendererOn('dialog:path', (event, ...args) => {
 
 function OnSave() {
   const cfg_all: ConfigAll = {
-    balance: {hashring: [], hashslot: [], random: []}, middleware: [], mongodb: [], node: [], redis: []
+    balance: {hashring: [], hashslot: [], random: []},
+    realm: {strategy: ''},
+    pipeline: '',
+    middleware: [],
+    mongodb: [],
+    node: [],
+    redis: []
   }
 
   cfg_all.balance = cfg_balance.value
+  cfg_all.realm = cfg_other.value.realm
+  cfg_all.pipeline = cfg_other.value.pipeline
   cfg_all.redis = cfg_redis.value
   cfg_all.mongodb = cfg_mongodb.value
   cfg_all.middleware = cfg_middleware.value
@@ -251,6 +273,10 @@ function OnMongoDbChange(mongodb: MongoDbCfg[]) {
 
 function OnMiddlewareChange(middleware: MiddlewareCfg[]) {
   cfg_middleware.value = middleware
+}
+
+function OnOtherChange(other: OtherCfg) {
+  cfg_other.value = other
 }
 
 </script>

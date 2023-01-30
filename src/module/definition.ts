@@ -38,3 +38,40 @@ export interface OtherCfg {
 export interface RealmCfg {
     strategy: string,
 }
+
+// Dev Node
+export interface DevNode {
+    id: number,
+    name: string,
+    ip: string,
+    innerPort: number,
+    watcherPort: number,
+    grpcPort: number,
+    scene: DevScene[],
+}
+
+export interface DevScene {
+    id: number,
+    type: string,
+    name: string,
+    outerPort: number | undefined,
+}
+
+// Release Node
+export interface RelNode {
+    outerPort: number,
+    innerPort: number,
+    watcherPort: number,
+    grpcPort: number,
+}
+
+export interface RelScene {
+    type: string,
+    replicas: number,
+    outer?: RelOuter[],
+}
+
+export interface RelOuter {
+    ip: string,
+    port: number,
+}

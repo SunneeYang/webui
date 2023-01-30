@@ -91,6 +91,7 @@
 import {ref, watch} from "vue";
 import {Coin, Delete, Edit, Grid, Paperclip} from '@element-plus/icons-vue';
 import {MongoDbCfg} from "../../module/definition";
+import {tryOnMounted} from '@vueuse/core';
 
 const props = defineProps<{ mongodb: MongoDbCfg[] }>()
 const emit = defineEmits(['change'])
@@ -109,7 +110,10 @@ const editor_visible = ref(false);
 const mongodb_form = ref({name: '', url: '', db: '', names: ''});
 const mongodb_form_index = ref(0);
 
-watch(props, () => {
+tryOnMounted(OnLoad)
+watch(props, OnLoad)
+
+function OnLoad() {
   mongodb_index.value = 1
   mongodb.value = []
   props.mongodb.forEach(r => {
@@ -120,7 +124,7 @@ watch(props, () => {
       names: r.names
     })
   })
-})
+}
 
 function OnAdd() {
   mongodb_form_index.value = -1

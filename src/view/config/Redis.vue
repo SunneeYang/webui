@@ -91,6 +91,7 @@
 import {ref, watch} from "vue";
 import {Coin, Delete, Edit, Grid, Paperclip} from '@element-plus/icons-vue';
 import {RedisCfg} from "../../module/definition";
+import {tryOnMounted} from '@vueuse/core';
 
 const props = defineProps<{ redis: RedisCfg[] }>()
 const emit = defineEmits(['change'])
@@ -109,7 +110,11 @@ const editor_visible = ref(false);
 const redis_form = ref({name: '', url: '', db: 0, names: ''});
 const redis_form_index = ref(0);
 
-watch(props, () => {
+tryOnMounted(OnLoad)
+
+watch(props, OnLoad)
+
+function OnLoad() {
   redis_index.value = 1
   redis.value = []
   props.redis.forEach(r => {
@@ -120,7 +125,7 @@ watch(props, () => {
       names: r.names
     })
   })
-})
+}
 
 function OnAdd() {
   redis_form_index.value = -1

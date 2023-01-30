@@ -95,6 +95,7 @@ import {Ref, ref, watch} from "vue";
 import {Delete, Edit, Histogram, List, Postcard} from '@element-plus/icons-vue';
 import {MiddlewareCfg} from "../../module/definition";
 import {ElMessage} from "element-plus";
+import {tryOnMounted} from "@vueuse/core";
 
 const props = defineProps<{ middleware: MiddlewareCfg[] }>()
 const emit = defineEmits(['change'])
@@ -106,7 +107,10 @@ const editor_visible = ref(false);
 const middleware_form: Ref<MiddlewareCfg> = ref<MiddlewareCfg>({name: '', type: '', config: ''});
 const middleware_form_index = ref(0);
 
-watch(props, () => {
+tryOnMounted(OnLoad)
+watch(props, OnLoad)
+
+function OnLoad() {
   middleware.value = []
   props.middleware.forEach(m => {
     middleware.value.push({
@@ -116,7 +120,7 @@ watch(props, () => {
     })
   })
   middleware_index.value = middleware.value.length + 1
-})
+}
 
 function OnAdd() {
   middleware_form_index.value = -1

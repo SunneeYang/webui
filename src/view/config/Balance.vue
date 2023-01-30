@@ -40,6 +40,7 @@
 <script lang="ts" setup>
 import {ref, Ref, watch} from "vue";
 import {BalanceCfg, SceneType} from "../../module/definition";
+import {tryOnMounted} from "@vueuse/core";
 
 // const props = defineProps(['balance'])
 const props = defineProps<{ balance: BalanceCfg }>()
@@ -47,9 +48,8 @@ const emit = defineEmits(['submit'])
 
 const cfg_balance_form: Ref<BalanceCfg> = ref({hashring: [], hashslot: [], random: []})
 
-watch(props, () => {
-  OnBalanceCancel()
-})
+tryOnMounted(OnBalanceCancel)
+watch(props, OnBalanceCancel)
 
 function OnBalanceSave() {
   emit('submit', cfg_balance_form.value)

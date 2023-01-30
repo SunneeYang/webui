@@ -14,10 +14,11 @@
                     active-text="开发版"
                     active-value="dev"
                     inactive-text="发布版"
-                    inactive-value="release"
+                    inactive-value="rel"
                     inline-prompt
                     size="large"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #66b1ff"
+                    @change="OnRefreshClick"
                 />
               </el-col>
               <el-col id="head-btn" :span="8">
@@ -41,6 +42,15 @@
           </div>
         </template>
         <el-tabs>
+
+          <el-tab-pane v-if="edition === 'dev'" label="Node">
+            Dev Node
+          </el-tab-pane>
+
+          <el-tab-pane v-else label="Node">
+            <ReleaseNode :node="cfg_rel_node" :scene="cfg_rel_scene" @change="OnRelNodeChange"/>
+          </el-tab-pane>
+
           <el-tab-pane label="Balance">
             <Balance :balance="cfg_balance" @submit="OnBalanceSubmit"/>
           </el-tab-pane>
@@ -98,17 +108,28 @@ import {tryOnMounted, useStorage} from '@vueuse/core';
 import {useIpcRendererInvoke, useIpcRendererOn} from "@vueuse/electron";
 import {ElMessage} from "element-plus";
 import * as path from "path";
-import {BalanceCfg, MiddlewareCfg, MongoDbCfg, OtherCfg, RealmCfg, RedisCfg} from "../../module/definition";
+import {
+  BalanceCfg,
+  DevNode,
+  MiddlewareCfg,
+  MongoDbCfg,
+  OtherCfg,
+  RealmCfg,
+  RedisCfg,
+  RelNode,
+  RelScene
+} from "../../module/definition";
 import Balance from "./Balance.vue";
 import Middleware from "./Middleware.vue";
 import Redis from "./Redis.vue";
 import MongoDb from "./MongoDb.vue";
 import Other from "./Other.vue";
+import ReleaseNode from "./ReleaseNode.vue";
 
 const fs = require('fs');
 const yaml = require('js-yaml');
 
-const edition = ref('dev')
+const edition = ref('rel')
 
 // setting
 const setting_visible = ref(false)
@@ -126,8 +147,16 @@ const cfg_mongodb: Ref<MongoDbCfg[]> = ref([]);
 const cfg_middleware: Ref<MiddlewareCfg[]> = ref([])
 const cfg_other: Ref<OtherCfg> = ref({pipeline: '', realm: {strategy: ''}});
 
+// dev
+const cfg_dev_node: Ref<Map<string, DevNode>> = ref<Map<string, DevNode>>(new Map<string, DevNode>());
+
+// release
+const cfg_rel_node: Ref<RelNode> = ref<RelNode>({outerPort: 0, innerPort: 0, grpcPort: 0, watcherPort: 0})
+const cfg_rel_scene: Ref<RelScene[]> = ref<RelScene[]>([]);
+
 interface ConfigAll {
-  node: object[],
+  node: object,
+  scene?: RelScene[],
   balance: BalanceCfg,
   realm: RealmCfg,
   pipeline: string,
@@ -146,9 +175,9 @@ tryOnMounted(() => {
   }
 })
 
-
 function OnRefreshClick() {
-  const config_path = path.join(setting_content.value.server_path, 'Config/service_brick', edition.value === 'dev' ? 'brick_dev.yaml' : 'brick.yaml')
+  const dev = edition.value === 'dev';
+  const config_path = path.join(setting_content.value.server_path, 'Config/service_brick', dev ? 'brick_dev.yaml' : 'brick.yaml')
   const contents = fs.readFileSync(config_path, 'utf8')
 
   cfg_middleware.value = []
@@ -157,6 +186,15 @@ function OnRefreshClick() {
     const doc = yaml.load(contents, {});
 
     // node
+    if (dev) {
+      cfg_dev_node.value.clear()
+      for (let nodeName in doc.node) {
+        cfg_dev_node.value.set(nodeName, doc.node[nodeName])
+      }
+    } else {
+      cfg_rel_node.value = doc.node
+      cfg_rel_scene.value = doc.scene
+    }
 
     // balance
     cfg_balance.value = doc.balance
@@ -236,13 +274,24 @@ useIpcRendererOn('dialog:path', (event, ...args) => {
 
 function OnSave() {
   const cfg_all: ConfigAll = {
+    node: {},
     balance: {hashring: [], hashslot: [], random: []},
     realm: {strategy: ''},
     pipeline: '',
     middleware: [],
     mongodb: [],
-    node: [],
     redis: []
+  }
+
+  if (edition.value === 'dev') {
+    cfg_all.node = {}
+    // for (let [key, value] of cfg_dev_node.value) {
+    //   cfg_all.node[key] = value
+    // }
+    cfg_all.scene = undefined
+  } else {
+    cfg_all.node = cfg_rel_node.value
+    cfg_all.scene = cfg_rel_scene.value
   }
 
   cfg_all.balance = cfg_balance.value
@@ -277,6 +326,11 @@ function OnMiddlewareChange(middleware: MiddlewareCfg[]) {
 
 function OnOtherChange(other: OtherCfg) {
   cfg_other.value = other
+}
+
+function OnRelNodeChange(node: RelNode, scene: RelScene[]) {
+  cfg_rel_node.value = node
+  cfg_rel_scene.value = scene
 }
 
 </script>

@@ -18,6 +18,7 @@
 
 import {OtherCfg} from "../../module/definition";
 import {Ref, ref, watch} from "vue";
+import {tryOnMounted} from '@vueuse/core';
 
 const props = defineProps<{ other: OtherCfg }>()
 const emit = defineEmits(['change'])
@@ -25,10 +26,13 @@ const emit = defineEmits(['change'])
 const other_form: Ref<OtherCfg> = ref<OtherCfg>({realm: {strategy: ''}, pipeline: ''});
 const realm_strategy = ['Debug', 'Local', 'Platform']
 
-watch(props, () => {
+tryOnMounted(OnLoad)
+watch(props, OnLoad)
+
+function OnLoad() {
   other_form.value.pipeline = props.other.pipeline
   other_form.value.realm.strategy = props.other.realm.strategy
-})
+}
 
 function OnPipelineChange() {
   OnChange()

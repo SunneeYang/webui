@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useDark, useToggle } from '@vueuse/core'
-import { useIpcRendererOn } from "@vueuse/electron";
+import {useDark, useToggle} from '@vueuse/core'
+import {useIpcRendererOn} from "@vueuse/electron";
 import {useRouter} from "vue-router";
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
 const router = useRouter()
-router.push('/config')
+router.push('/excel')
 
 console.log("[App.vue]", `Hello world from Electron ${process.versions.electron}!`)
 

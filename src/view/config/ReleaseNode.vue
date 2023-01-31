@@ -300,7 +300,7 @@ function OnSceneOuterAdd() {
 
 function OnSceneOuterEdit(index: number) {
   scene_outer_form_index.value = index
-  const outer = scene_form.value.outer[index]
+  const outer = scene_form.value.outer![index]
   scene_outer_form.value.ip = outer.ip
   scene_outer_form.value.port = outer.port
   scene_outer_form_visible.value = true
@@ -321,14 +321,14 @@ function OnSceneOuterEditConfirm() {
 
   // add
   if (scene_outer_form_index.value < 0) {
-    scene_form.value.outer.push({
+    scene_form.value.outer!.push({
       ip: scene_outer_form.value.ip,
       port: scene_outer_form.value.port,
     })
   }
   // change
   else {
-    const outer = scene_form.value.outer[scene_outer_form_index.value]
+    const outer = scene_form.value.outer![scene_outer_form_index.value]
     outer.ip = scene_outer_form.value.ip
     outer.port = scene_outer_form.value.port
   }
@@ -340,7 +340,7 @@ function OnSceneOuterEditCancel() {
 }
 
 function OnSceneOuterDelete(index: number) {
-  scene_form.value.outer.splice(index, 1)
+  scene_form.value.outer!.splice(index, 1)
 }
 
 function OnChange() {

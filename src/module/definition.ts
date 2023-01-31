@@ -10,6 +10,7 @@ export interface BalanceCfg {
 export interface RedisCfg
 {
     url: string,
+    password: string | undefined,
     db: number,
     names: string[],
 }

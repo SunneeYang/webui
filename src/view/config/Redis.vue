@@ -72,6 +72,9 @@
       <el-form-item label="Url">
         <el-input v-model="redis_form.url" :prefix-icon="Paperclip"/>
       </el-form-item>
+      <el-form-item label="Password">
+        <el-input v-model="redis_form.password" :prefix-icon="Lock"/>
+      </el-form-item>
       <el-form-item label="Db">
         <el-input v-model="redis_form.db" :prefix-icon="Coin"/>
       </el-form-item>
@@ -89,9 +92,9 @@
 <script lang="ts" setup>
 
 import {ref, watch} from "vue";
-import {Coin, Delete, Edit, Grid, Paperclip} from '@element-plus/icons-vue';
+import {Coin, Delete, Edit, Grid, Lock, Paperclip} from '@element-plus/icons-vue';
 import {RedisCfg} from "../../module/definition";
-import {tryOnMounted} from '@vueuse/core';
+import {isDefined, tryOnMounted} from '@vueuse/core';
 
 const props = defineProps<{ redis: RedisCfg[] }>()
 const emit = defineEmits(['change'])
@@ -99,6 +102,7 @@ const emit = defineEmits(['change'])
 interface RedisInfo {
   name: string,
   url: string,
+  password: string | undefined,
   db: number,
   names: string[],
 }
@@ -107,7 +111,7 @@ const redis = ref<RedisInfo[]>([])
 
 const redis_index = ref(1);
 const editor_visible = ref(false);
-const redis_form = ref({name: '', url: '', db: 0, names: ''});
+const redis_form = ref({name: '', url: '', password: '', db: 0, names: ''});
 const redis_form_index = ref(0);
 
 tryOnMounted(OnLoad)
@@ -121,6 +125,7 @@ function OnLoad() {
     redis.value.push({
       name: `Redis-${redis_index.value++}`,
       url: r.url,
+      password: undefined,
       db: r.db,
       names: r.names
     })
@@ -160,12 +165,14 @@ function OnEditConfirm() {
   if (redis_form_index.value >= 0) {
     const content = redis.value[redis_form_index.value];
     content.url = redis_form.value.url
+    content.password = redis_form.value.password
     content.db = redis_form.value.db
     content.names = redis_form.value.names.split(',')
   } else {
     redis.value.push({
       name: redis_form.value.name,
       url: redis_form.value.url,
+      password: redis_form.value.password,
       db: redis_form.value.db,
       names: redis_form.value.names.split(',')
     })
@@ -186,6 +193,7 @@ function OnChange() {
   redis.value.forEach(r => {
     all_redis.push({
       url: r.url,
+      password: isDefined(r.password) && r.password.length > 0 ? r.password : undefined,
       db: r.db,
       names: r.names
     })

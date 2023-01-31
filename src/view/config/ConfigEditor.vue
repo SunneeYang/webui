@@ -44,7 +44,7 @@
         <el-tabs>
 
           <el-tab-pane v-if="edition === 'dev'" label="Node">
-            Dev Node
+            <DevelopNode :node="cfg_dev_node" @change="OnDevNodeChange"/>
           </el-tab-pane>
 
           <el-tab-pane v-else label="Node">
@@ -125,11 +125,12 @@ import Redis from "./Redis.vue";
 import MongoDb from "./MongoDb.vue";
 import Other from "./Other.vue";
 import ReleaseNode from "./ReleaseNode.vue";
+import DevelopNode from "./DevelopNode.vue";
 
 const fs = require('fs');
 const yaml = require('js-yaml');
 
-const edition = ref('rel')
+const edition = ref('dev')
 
 // setting
 const setting_visible = ref(false)
@@ -284,10 +285,7 @@ function OnSave() {
   }
 
   if (edition.value === 'dev') {
-    cfg_all.node = {}
-    // for (let [key, value] of cfg_dev_node.value) {
-    //   cfg_all.node[key] = value
-    // }
+    cfg_all.node = Object.fromEntries(cfg_dev_node.value)
     cfg_all.scene = undefined
   } else {
     cfg_all.node = cfg_rel_node.value
@@ -302,10 +300,18 @@ function OnSave() {
   cfg_all.middleware = cfg_middleware.value
 
   const content = yaml.dump(cfg_all, {lineWidth: -1})
-  console.log(content)
+  // console.log(content)
 
-  // const config_path = path.join(setting_content.value.server_path, 'Config/service_brick', edition.value === 'dev' ? 'brick_dev_new.yaml' : 'brick_new.yaml')
-  // const contents = fs.writeFileSync(config_path, )
+  const config_path = path.join(setting_content.value.server_path, 'Config/service_brick', edition.value === 'dev' ? 'brick_dev.yaml' : 'brick.yaml')
+  fs.writeFileSync(config_path, content, 'utf8')
+
+  ElMessage({
+    message: '保存成功',
+    type: 'success',
+    center: true,
+    grouping: true,
+    duration: 1000
+  })
 }
 
 function OnBalanceSubmit(balance: BalanceCfg) {
@@ -331,6 +337,10 @@ function OnOtherChange(other: OtherCfg) {
 function OnRelNodeChange(node: RelNode, scene: RelScene[]) {
   cfg_rel_node.value = node
   cfg_rel_scene.value = scene
+}
+
+function OnDevNodeChange(node: Map<string, DevNode>) {
+  cfg_dev_node.value = node
 }
 
 </script>

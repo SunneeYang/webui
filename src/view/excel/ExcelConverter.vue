@@ -109,13 +109,14 @@
 </template>
 
 <script setup lang="ts">
-import {computed, reactive, ref, watch} from "vue";
-import {Setting, Refresh, Folder} from "@element-plus/icons-vue";
-import { tryOnMounted, useStorage } from '@vueuse/core';
+import {reactive, ref, watch} from "vue";
+import {Folder, Refresh, Setting} from "@element-plus/icons-vue";
+import {tryOnMounted, useStorage} from '@vueuse/core';
 import {useIpcRendererInvoke, useIpcRendererOn} from "@vueuse/electron";
 import * as path from "path";
-import {ElTree, ElMessage} from "element-plus";
+import {ElMessage, ElTree} from "element-plus";
 import {TreeNodeData} from "element-plus/es/components/tree/src/tree.type";
+
 const fs = require('fs');
 const xlsx = require('xlsx')
 
@@ -211,13 +212,19 @@ function OnRefreshClick()
       if (path.extname(file) !== '.xlsx')
         return
 
-      const one_excel : ExcelTree = { label: path.basename(file, '.xlsx'), children: [] }
+      if (file.startsWith('~$'))
+        return
+
+      const one_excel: ExcelTree = {label: path.basename(file, '.xlsx'), children: []}
 
       const filePath = path.join(setting_form.excel_path, file)
       const workbook = xlsx.readFile(filePath)
 
-      workbook.SheetNames.forEach(function (sheet:string) {
-        const one_sheet : ExcelTree = { label: sheet, excel_name: file }
+      workbook.SheetNames.forEach(function (sheet: string) {
+        if (sheet.startsWith('#') || sheet.startsWith('~'))
+          return
+        
+        const one_sheet: ExcelTree = {label: sheet, excel_name: file}
         one_excel.children!.push(one_sheet)
       })
 
